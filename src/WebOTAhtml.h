@@ -1,5 +1,5 @@
 // R Macro string literal https://en.cppreference.com/w/cpp/language/string_literal
-const char ota_html[] PROGMEM = "<h1>WebOTA Version: " WEBOTA_VERSION "</h1>"
+const char ota_html[] PROGMEM = "<h1>ESP WebOTA</h1>"
 R"!^!(
 
 <form method="POST" action="#" enctype="multipart/form-data" id="upload_form">

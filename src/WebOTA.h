@@ -17,14 +17,14 @@ class WebOTA {
 		String path = "";
 
 		#ifdef ESP8266
-			int init( ESP8266WebServer *server, const char *path);
+			uint8_t init( ESP8266WebServer *server, const char *path);
 		#endif
 		#ifdef ESP32
-			int init( WebServer *server, const char *path);
+			uint8_t init( WebServer *server, const char *path);
 		#endif
 
 		void delay(int ms);
-		int add_http_routes(const char *path);
+		uint8_t add_http_routes( const char *path );
 		int handle();
 	private:
 		bool init_has_run;

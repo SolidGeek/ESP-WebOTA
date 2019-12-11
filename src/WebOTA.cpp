@@ -9,13 +9,12 @@ WebOTA webota;
 
 ////////////////////////////////////////////////////////////////////////////
 
-#ifdef ESP32
-uint8_t WebOTA::init( ESP8266WebServer *server, const char *path)
-#endif
 #ifdef ESP8266
-uint8_t WebOTA::init( WebServer *server, const char *path)
+uint8_t WebOTA::init( ESP8266WebServer *server, const char *path) {
 #endif
-{
+#ifdef ESP32
+uint8_t WebOTA::init( WebServer *server, const char *path) {
+#endif
 	this->path = path;
 	this->server = server;
 
@@ -40,10 +39,12 @@ long WebOTA::max_sketch_size() {
 
 uint8_t WebOTA::add_http_routes( const char *path ) {
 
-	// Index page
-	server->on("/", HTTP_GET, [server]() {
-		server->send(200, "text/html", "<h1>WebOTA</h1>");
-	});
+	#ifdef ESP8266
+	ESP8266WebServer *server = this->server;
+	#endif
+	#ifdef ESP32
+	WebServer *server = this->server;
+	#endif
 
 	// Upload firmware page
 	server->on(path, HTTP_GET, [server,this]() {
@@ -91,8 +92,6 @@ uint8_t WebOTA::add_http_routes( const char *path ) {
 		}
 	});
 
-	server->begin();
-
 	return 1;
 }
 
@@ -102,7 +101,7 @@ void WebOTA::delay(int ms) {
 	int last = millis();
 
 	while ((millis() - last) < ms) {
-		OTAServer.handleClient();
+		server->handleClient();
 		this->delay(5);
 	}
 }
