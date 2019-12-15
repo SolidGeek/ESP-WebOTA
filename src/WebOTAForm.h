@@ -1,0 +1,103 @@
+// R Macro string literal https://en.cppreference.com/w/cpp/language/string_literal
+const char ota_html[] PROGMEM = 
+R"(<!DOCTYPE html>
+<html>
+	<head>
+		<title>WebOTA Firmware Update</title>
+	</head>
+	<body style="background:#2a2c30; color: #fff; text-align: center; font-family: sans-serif;">
+		<h1>Update Wifi module</h1>
+
+		<div style="margin: 0 auto; background: #222427; width: 400px; padding: 10px 20px 30px; border-radius: 5px; text-align: left;">
+			<h3>Firmware</h3>
+			<p>Select file ending with: .ino.bin</p>
+			<form method='POST' action='' id="firmware_form" enctype='multipart/form-data'>
+				<input type='file' class='file' accept='.bin' name='firmware'>
+				<input type='submit' value='Update Firmware'>
+			</form>
+
+			<h3>Application</h3>
+			<p>Select file ending with: .spiffs.bin</p>
+			<form method='POST' action='' id="filesystem_form" enctype='multipart/form-data'>
+				<input type='file' class='file' accept='.bin' name='filesystem'>
+				<input type='submit' value='Update FileSystem'>
+			</form>
+
+			<br><br>
+
+			<div id="status" style="margin-bottom:5; text-align:center; font-size:20px"></div>
+			<div id="progress" style="border-radius:5px;text-shadow: 1px 1px 3px black; padding: 5px 0; display: none; border: 1px solid #008aff; background: #002180; text-align: center; color: white;"></div>
+			
+		</div>
+
+		<script>
+		var domReady = function(callback) {
+			document.readyState === "interactive" || document.readyState === "complete" ? callback() : document.addEventListener("DOMContentLoaded", callback);
+		};
+
+		domReady(function() {
+
+			var progress = document.getElementById('progress');
+			var status = document.getElementById('status');
+			var fwForm = document.getElementById('firmware_form');
+			var fsForm = document.getElementById('filesystem_form');
+
+			fwForm.onsubmit = function(event){
+				event.preventDefault();
+				var file = event.currentTarget.getElementsByClassName('file')[0];
+				uploadFile( file.files[0], file.getAttribute('name') );
+			}
+
+			fsForm.onsubmit = function(event){
+				event.preventDefault();
+				var file = event.currentTarget.getElementsByClassName('file')[0];
+				uploadFile( file.files[0], file.getAttribute('name') );
+			}
+
+			function uploadFile(file, type){
+				
+				var formData = new FormData();
+
+				if (!file) { return false; }
+
+				formData.append(type, file, file.name);
+
+				var xhr = new XMLHttpRequest();
+
+				xhr.upload.addEventListener('progress', function(evt) {
+					console.log(evt);
+					console.log("HEJ");
+					if (evt.lengthComputable) {
+						var per = Math.round((evt.loaded / evt.total) * 100);
+						
+						status.innerHTML = "Updating...";
+
+						progress.innerHTML     = per + "%"
+						progress.style.width   = per + "%"
+						progress.style.display = "block"
+					}
+				});
+
+			    xhr.upload.addEventListener('loadend', function(event){
+			    	console.log("LOAD ENDED");
+			    	console.log(xhr);
+			    	console.log(event)
+			    	console.log("Status: "  + xhr.status);
+					if (xhr.status === 200) {
+						status.innerHTML = "Update successful";
+					} else {
+						status.innerHTML = "Update failed";
+					}
+			    });
+
+			    xhr.upload.addEventListener('error', function(event){
+			    	console.log("Error occured doing upload");
+			    });
+
+				xhr.open('POST', location.href, true);
+				xhr.send(formData);
+			}
+		});
+		</script>
+	</body>
+</html>)";

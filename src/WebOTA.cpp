@@ -53,21 +53,42 @@ uint8_t WebOTA::add_http_routes( const char *path ) {
 
 	// Handling uploading firmware file
 	server->on(path, HTTP_POST, [server,this]() {
+		Serial.println("Sending HTTP 200");
 		server->send(200, "text/plain", (Update.hasError()) ? "Update: fail\n" : "Update: OK!\n");
 		delay(500);
 		ESP.restart();
 	}, [server,this]() {
 		HTTPUpload& upload = server->upload();
 
+		Serial.println("Upload status:" + String(upload.status));
+
 		if (upload.status == UPLOAD_FILE_START) {
-			Serial.printf("Firmware update initiated: %s\r\n", upload.filename.c_str());
 
-			//uint32_t maxSketchSpace = (ESP.getFreeSketchSpace() - 0x1000) & 0xFFFFF000;
-			uint32_t maxSketchSpace = this->max_sketch_size();
+			Serial.println( "Upload-name: " + upload.name );
 
-			if (!Update.begin(maxSketchSpace)) { //start with max available size
-				Update.printError(Serial);
+			if (upload.name == "filesystem") {
+
+				Serial.println("Filesystem update initiated:" + String(upload.filename)) ;
+
+				size_t fsSize = ((size_t) &_FS_end - (size_t) &_FS_start);
+				SPIFFS.end();
+
+				if (!Update.begin(fsSize, U_FS)){//start with max available size
+					Update.printError(Serial);
+				}
+
+	        } else if (upload.name == "firmware" ) {
+
+				Serial.println("Firmware update initiated: " + String(upload.filename));
+
+				//uint32_t maxSketchSpace = (ESP.getFreeSketchSpace() - 0x1000) & 0xFFFFF000;
+				uint32_t maxSketchSpace = this->max_sketch_size();
+
+				if (!Update.begin(maxSketchSpace ,U_FLASH)) { //start with max available size
+					Update.printError(Serial);
+				}
 			}
+
 		} else if (upload.status == UPLOAD_FILE_WRITE) {
 			/* flashing firmware to ESP*/
 			if (Update.write(upload.buf, upload.currentSize) != upload.currentSize) {
@@ -85,6 +106,7 @@ uint8_t WebOTA::add_http_routes( const char *path ) {
 			}
 		} else if (upload.status == UPLOAD_FILE_END) {
 			if (Update.end(true)) { //true to set the size to the current progress
+				server->send(200);
 				Serial.printf("\r\nFirmware update successful: %u bytes\r\nRebooting...\r\n", upload.totalSize);
 			} else {
 				Update.printError(Serial);
