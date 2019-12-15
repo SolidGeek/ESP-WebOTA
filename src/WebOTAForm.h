@@ -23,9 +23,10 @@ R"(<!DOCTYPE html>
 				<input type='submit' value='Update FileSystem'>
 			</form>
 
-			<br><br>
+			<br>
 
-			<div id="status" style="margin-bottom:5; text-align:center; font-size:20px"></div>
+
+			<div id="status" style="padding-bottom:5px; text-align:center; font-size:20px"></div>
 			<div id="progress" style="border-radius:5px;text-shadow: 1px 1px 3px black; padding: 5px 0; display: none; border: 1px solid #008aff; background: #002180; text-align: center; color: white;"></div>
 			
 		</div>
@@ -65,8 +66,6 @@ R"(<!DOCTYPE html>
 				var xhr = new XMLHttpRequest();
 
 				xhr.upload.addEventListener('progress', function(evt) {
-					console.log(evt);
-					console.log("HEJ");
 					if (evt.lengthComputable) {
 						var per = Math.round((evt.loaded / evt.total) * 100);
 						
@@ -78,20 +77,19 @@ R"(<!DOCTYPE html>
 					}
 				});
 
-			    xhr.upload.addEventListener('loadend', function(event){
-			    	console.log("LOAD ENDED");
-			    	console.log(xhr);
-			    	console.log(event)
-			    	console.log("Status: "  + xhr.status);
+				xhr.onreadystatechange = function() {
+
 					if (xhr.status === 200) {
-						status.innerHTML = "Update successful";
+						status.innerHTML = "Update successful<br><small>The WiFi will now restart. Please refresh this page</small>";
 					} else {
-						status.innerHTML = "Update failed";
+						status.innerHTML = "Update failed<br><small>Repower module and try again</small>";
 					}
-			    });
+				
+				}
 
 			    xhr.upload.addEventListener('error', function(event){
 			    	console.log("Error occured doing upload");
+			    	status.innerHTML = "Update failed";
 			    });
 
 				xhr.open('POST', location.href, true);

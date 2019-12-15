@@ -53,18 +53,19 @@ uint8_t WebOTA::add_http_routes( const char *path ) {
 
 	// Handling uploading firmware file
 	server->on(path, HTTP_POST, [server,this]() {
-		Serial.println("Sending HTTP 200");
-		server->send(200, "text/plain", (Update.hasError()) ? "Update: fail\n" : "Update: OK!\n");
+
+		if( Update.hasError() ){
+			server->send(500, "text/plain", "Update failed"); 
+		}else{
+			server->send(200, "text/plain", "Update successful");
+		}
+		
 		delay(500);
 		ESP.restart();
 	}, [server,this]() {
 		HTTPUpload& upload = server->upload();
 
-		Serial.println("Upload status:" + String(upload.status));
-
 		if (upload.status == UPLOAD_FILE_START) {
-
-			Serial.println( "Upload-name: " + upload.name );
 
 			if (upload.name == "filesystem") {
 
@@ -106,7 +107,6 @@ uint8_t WebOTA::add_http_routes( const char *path ) {
 			}
 		} else if (upload.status == UPLOAD_FILE_END) {
 			if (Update.end(true)) { //true to set the size to the current progress
-				server->send(200);
 				Serial.printf("\r\nFirmware update successful: %u bytes\r\nRebooting...\r\n", upload.totalSize);
 			} else {
 				Update.printError(Serial);
