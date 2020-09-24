@@ -8,7 +8,7 @@ R"(<!DOCTYPE html>
 	<body style="background:#2a2c30; color: #fff; text-align: center; font-family: sans-serif;">
 		<h1>Update Wifi module</h1>
 
-		<div style="margin: 0 auto; background: #222427; width: 400px; padding: 10px 20px 30px; border-radius: 5px; text-align: left;">
+		<div style="margin: 0 auto; background: #222427; width: 400px; padding: 5px 20px; border-radius: 5px; text-align: left;">
 			<h3>Firmware</h3>
 			<p>Select file ending with: .ino.bin</p>
 			<form method='POST' action='' id="firmware_form" enctype='multipart/form-data'>
@@ -25,10 +25,10 @@ R"(<!DOCTYPE html>
 
 			<br>
 
-
-			<div id="status" style="padding-bottom:5px; text-align:center; font-size:20px"></div>
-			<div id="progress" style="border-radius:5px;text-shadow: 1px 1px 3px black; padding: 5px 0; display: none; border: 1px solid #008aff; background: #002180; text-align: center; color: white;"></div>
-			
+			<div id="status" style="display:none; padding:15px 20px; text-align:center; border-top: 1px solid #2a2c30; margin: 0 -20px;">
+				<div id="response" style="font-size:20px;"></div>
+				<div id="progress" style="margin-top: 10px; border-radius: 5px;padding: 8px 0px;font-weight: bold;background: #5091e2;text-align: center;"></div>
+			</div>
 		</div>
 
 		<script>
@@ -40,6 +40,7 @@ R"(<!DOCTYPE html>
 
 			var progress = document.getElementById('progress');
 			var status = document.getElementById('status');
+			var response = document.getElementById('response');
 			var fwForm = document.getElementById('firmware_form');
 			var fsForm = document.getElementById('filesystem_form');
 
@@ -63,37 +64,30 @@ R"(<!DOCTYPE html>
 
 				formData.append(type, file, file.name);
 
-				var xhr = new XMLHttpRequest();
+				var request = new XMLHttpRequest();
 
-				xhr.upload.addEventListener('progress', function(evt) {
+				request.upload.addEventListener('progress', function(evt) {
 					if (evt.lengthComputable) {
 						var per = Math.round((evt.loaded / evt.total) * 100);
 						
-						status.innerHTML = "Updating...";
+						status.style.display = "block";
+						response.innerHTML = "Updating...";
 
 						progress.innerHTML     = per + "%"
 						progress.style.width   = per + "%"
-						progress.style.display = "block"
 					}
 				});
 
-				xhr.onreadystatechange = function() {
-
-					if (xhr.status === 200) {
-						status.innerHTML = "Update successful<br><small>The WiFi will now restart. Please refresh this page</small>";
+				request.onreadystatechange = function() {
+					if (request.status === 200) {
+						response.innerHTML = "Update successful<br><small>The WiFi-module will restart, please reconnect.</small>";
 					} else {
-						status.innerHTML = "Update failed<br><small>Repower module and try again</small>";
+						response.innerHTML = "Update failed<br><small>"+request.responseText+"</small>";
 					}
-				
 				}
 
-			    xhr.upload.addEventListener('error', function(event){
-			    	console.log("Error occured doing upload");
-			    	status.innerHTML = "Update failed";
-			    });
-
-				xhr.open('POST', location.href, true);
-				xhr.send(formData);
+				request.open('POST', location.href, true);
+				request.send(formData);
 			}
 		});
 		</script>
